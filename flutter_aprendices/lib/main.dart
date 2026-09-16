@@ -411,9 +411,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          abrirFormulario();
-        },
+        onPressed: abrirFormulario,
         icon: const Icon(Icons.add),
         label: const Text(
           'Nuevo aprendiz',
@@ -462,9 +460,7 @@ class _HomePageState extends State<HomePage> {
                               IconButton(
                                 tooltip: 'Editar',
                                 onPressed: () {
-                                  abrirFormulario(
-                                    aprendiz,
-                                  );
+                                  abrirFormulario(aprendiz);
                                 },
                                 icon: const Icon(
                                   Icons.edit,
@@ -490,10 +486,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // ===================================================
-  // FORMULARIO
-  // ===================================================
 
   Future<void> abrirFormulario([Map<String, dynamic>? aprendiz]) async {
     await showDialog(
@@ -538,7 +530,10 @@ class _FormularioAprendizState extends State<FormularioAprendiz> {
   late TextEditingController celular;
   late TextEditingController email;
 
-  String genero = 'M';
+  // Supabase acepta F y N
+  // N = Masculino
+  // F = Femenino
+  String genero = 'N';
 
   bool guardando = false;
 
@@ -582,6 +577,12 @@ class _FormularioAprendizState extends State<FormularioAprendiz> {
 
     if (aprendiz?['genero'] != null) {
       genero = aprendiz!['genero'].toString();
+
+      // Por seguridad, si llega un valor antiguo no permitido,
+      // dejamos Masculino como valor predeterminado.
+      if (genero != 'F' && genero != 'N') {
+        genero = 'N';
+      }
     }
   }
 
@@ -604,10 +605,8 @@ class _FormularioAprendizState extends State<FormularioAprendiz> {
   // ===================================================
 
   Future<void> seleccionarFecha() async {
-    DateTime fechaInicial = DateTime.tryParse(
-          fechaNacimiento.text,
-        ) ??
-        DateTime(2000, 1, 1);
+    DateTime fechaInicial =
+        DateTime.tryParse(fechaNacimiento.text) ?? DateTime(2000, 1, 1);
 
     final fechaSeleccionada = await showDatePicker(
       context: context,
@@ -663,14 +662,12 @@ class _FormularioAprendizState extends State<FormularioAprendiz> {
 
     try {
       if (widget.aprendiz == null) {
-        // CREATE
         await supabase.from('aprendiz').insert(datos);
 
         mostrarMensaje(
           'Aprendiz creado correctamente',
         );
       } else {
-        // UPDATE
         await supabase.from('aprendiz').update(datos).eq('id', idNumero);
 
         mostrarMensaje(
@@ -777,6 +774,10 @@ class _FormularioAprendizState extends State<FormularioAprendiz> {
                   apellido2,
                   obligatorio: false,
                 ),
+
+                // ==============================
+                // GÉNERO
+                // ==============================
                 DropdownButtonFormField<String>(
                   value: genero,
                   decoration: const InputDecoration(
@@ -785,16 +786,12 @@ class _FormularioAprendizState extends State<FormularioAprendiz> {
                   ),
                   items: const [
                     DropdownMenuItem(
-                      value: 'M',
+                      value: 'N',
                       child: Text('Masculino'),
                     ),
                     DropdownMenuItem(
                       value: 'F',
                       child: Text('Femenino'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'O',
-                      child: Text('Otro'),
                     ),
                   ],
                   onChanged: (valor) {
@@ -805,7 +802,9 @@ class _FormularioAprendizState extends State<FormularioAprendiz> {
                     }
                   },
                 ),
+
                 const SizedBox(height: 12),
+
                 TextFormField(
                   controller: fechaNacimiento,
                   readOnly: true,
@@ -819,12 +818,15 @@ class _FormularioAprendizState extends State<FormularioAprendiz> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
                 campo(
                   'Celular',
                   celular,
                   tipo: TextInputType.phone,
                 ),
+
                 campo(
                   'Correo electrónico',
                   email,
