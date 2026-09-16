@@ -22,8 +22,12 @@ jobs:
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: '3.35.4'
           channel: stable
+          cache: true
+
+      - name: Verificar Flutter
+        run: flutter --version
 
       - name: Instalar dependencias
         run: flutter pub get
@@ -31,10 +35,10 @@ jobs:
       - name: Compilar Flutter Web
         run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
 
-      - name: Configurar Pages
+      - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Subir archivos
+      - name: Preparar archivos
         uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
